@@ -1,0 +1,39 @@
+name: Build SETUP JVRS
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'Installer/**'
+      - 'dist/**'
+
+jobs:
+  build-installer:
+    runs-on: windows-latest
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+
+      - name: Verificar aplicativo
+        shell: pwsh
+        run: |
+          $app = "dist/JOAO VITOR - MULTIMÍDIA JVRS.exe"
+          if (!(Test-Path $app)) {
+            Write-Error "Aplicativo ausente: $app. Adicione o executável compilado em dist/ antes de gerar o setup."
+          }
+
+      - name: Instalar Inno Setup
+        run: choco install innosetup --yes --no-progress
+
+      - name: Compilar SETUP JVRS
+        shell: pwsh
+        run: |
+          & "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe" "Installer/SETUP_JVRS.iss"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Publicar instalador como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: SETUP_JVRS
+          path: output/SETUP_JVRS.exe
+          if-no-files-found: error
